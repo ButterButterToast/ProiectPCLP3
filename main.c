@@ -2,6 +2,7 @@
 
 ADir AllocDir(){
 
+
     ADir d = malloc(sizeof(struct directory));
     if(!d){
         return NULL;
