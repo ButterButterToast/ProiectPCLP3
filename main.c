@@ -227,6 +227,34 @@ void InorderTreePrint_f(AFile node){
 
 }
 
+void InorderTreePrint_d_Hidden(ADir node){
+
+    if (node  == NULL ){
+        return;
+    }
+
+    InorderTreePrint_d(node->st);
+    if(node->name[0] != '.'){
+        printf("%s ",node->name);
+    }
+    InorderTreePrint_d(node->dr);
+
+}
+
+void InorderTreePrint_f_Hidden(AFile node){
+
+    if (node  == NULL ){
+        return;
+    }
+
+    InorderTreePrint_f(node->st);
+    if((node->name)[0] != '.'){
+        printf("%s ",node->name);
+    }
+    InorderTreePrint_f(node->dr);
+
+}
+
 void InorderTreePrint_2(AFile node, int lvl){
 
     if (node  == NULL ){
@@ -525,6 +553,8 @@ int main(void){
 
     ADir Current  = root;
 
+    ADir Previous = root;
+
     while(getline(&line, &len, stdin) != -1){
         char* tok = strtok(line, delim);
 
@@ -546,6 +576,11 @@ int main(void){
             }
             continue;
         }
+
+         if(*tok == 'd'){
+            tok = strtok(NULL,delim);
+            tok[strlen(tok) - 1] = '\0';   
+         }
 
         if(tok[1] == 'r'){
             ADir st = Current->st;
@@ -585,8 +620,8 @@ int main(void){
 
             InorderTreePrint_d(Current->SDRoot);
             InorderTreePrint_f(Current->FRoot);
-            printf("\n");
-            continue;            
+            printf("\n");    
+            continue;      
         }
 
         if(*tok == 'r'){
@@ -615,7 +650,13 @@ int main(void){
             tok = strtok(NULL,delim);
             tok[strlen(tok) - 1] = '\0';
             if(strcmp(tok,"..\0") == 0 && Current->parent != NULL){
+                Previous = Current;
                 Current = Current->parent; 
+                continue;
+            }else if(strcmp(tok,"-\0") == 0){
+                ADir aux = Current;
+                Current = Previous; 
+                Previous = aux;
                 continue;
             }else if(Current->parent == NULL && strcmp(tok,"..\0") == 0){
                 continue;
@@ -625,6 +666,7 @@ int main(void){
             if(dest_d == NULL){
                 printf("Directory not found!\n");
             }else{
+                Previous = Current;
                 Current = dest_d;
                 //printf("Current -> %s\n", dest_d->name);
             }
