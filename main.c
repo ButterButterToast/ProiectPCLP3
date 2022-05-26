@@ -233,11 +233,11 @@ void InorderTreePrint_d_Hidden(ADir node){
         return;
     }
 
-    InorderTreePrint_d(node->st);
+    InorderTreePrint_d_Hidden(node->st);
     if(node->name[0] != '.'){
         printf("%s ",node->name);
     }
-    InorderTreePrint_d(node->dr);
+    InorderTreePrint_d_Hidden(node->dr);
 
 }
 
@@ -247,11 +247,11 @@ void InorderTreePrint_f_Hidden(AFile node){
         return;
     }
 
-    InorderTreePrint_f(node->st);
+    InorderTreePrint_f_Hidden(node->st);
     if((node->name)[0] != '.'){
         printf("%s ",node->name);
     }
-    InorderTreePrint_f(node->dr);
+    InorderTreePrint_f_Hidden(node->dr);
 
 }
 
@@ -516,7 +516,7 @@ void FreeFileTree(AFile root){
 
     free(root->name);
     free(root);
-    //printf("    removed - %s\n",root->name);
+    
 }
 
 void ResetRoot(ADir root){
@@ -533,7 +533,7 @@ void ResetRoot(ADir root){
     
     
     FreeFileTree(root->FRoot);
-    //printf("removed - %s\n",root->name);
+    
     free(root->name);
     free(root);
     
@@ -555,10 +555,15 @@ int main(void){
 
     ADir Previous = root;
 
-    while(getline(&line, &len, stdin) != -1){
-        char* tok = strtok(line, delim);
+    int exit = 0;
 
-        if(*tok == 'm'){
+    while(getline(&line, &len, stdin) != -1){
+
+    char* tok = strtok(line, delim);
+
+    switch(*tok){
+
+        case 'm' :
             tok = strtok(NULL,delim);
             tok[strlen(tok) - 1] = '\0';
             ADir new_d = AllocDir();
@@ -568,36 +573,34 @@ int main(void){
                 printf("File %s already exists!\n",new_d->name);
                 free(new_d->name);
                 free(new_d);
-                continue;
+                break;
             }else if( InsertDir(Current,new_d) == 0 ){
                 printf("Directory %s already exists!\n",new_d->name);
                 free(new_d->name);
                 free(new_d);
+                break;            
             }
-            continue;
-        }
+            break;
 
-         if(*tok == 'd'){
-            tok = strtok(NULL,delim);
-            tok[strlen(tok) - 1] = '\0';   
-         }
+        case 't':
 
-        if(tok[1] == 'r'){
-            ADir st = Current->st;
-            ADir dr = Current->dr;
-            ADir P = Current->parent;
-            Current->parent = NULL;
-            Current->st = NULL;
-            Current->dr = NULL;
-            Tree(Current,0);
-            printf("\n\n");
-            Current->parent = P;
-            Current->st = st;
-            Current->dr = dr;
-            continue;           
-        }
+            if(tok[1] == 'r'){
 
-        if(*tok == 't'){
+                ADir st = Current->st;
+                ADir dr = Current->dr;
+                ADir P = Current->parent;
+                Current->parent = NULL;
+                Current->st = NULL;
+                Current->dr = NULL;
+                Tree(Current,0);
+                printf("\n\n");
+                Current->parent = P;
+                Current->st = st;
+                Current->dr = dr;
+                break;           
+            } 
+
+        
             tok = strtok(NULL,delim);
             tok[strlen(tok) - 1] = '\0';
             AFile new_f = AllocFile();
@@ -607,24 +610,31 @@ int main(void){
                 printf("Directory %s already exists!\n",new_f->name);
                 free(new_f->name);
                 free(new_f);
-                continue;
+                break;
             }else if( InsertFile(Current,new_f) == 0 ){
                 printf("File %s already exists!\n",new_f->name);
                 free(new_f->name);
                 free(new_f);
             }
-            continue;
-        }
+            break;
+    
 
-        if(*tok == 'l'){
+        case 'l' : 
 
-            InorderTreePrint_d(Current->SDRoot);
-            InorderTreePrint_f(Current->FRoot);
-            printf("\n");    
-            continue;      
-        }
+            if(tok[strlen(tok) - 1] == '\n'){
+                InorderTreePrint_d_Hidden(Current->SDRoot);
+                InorderTreePrint_f_Hidden(Current->FRoot);
+                printf("\n");    
+                break;      
+            }else{
+                InorderTreePrint_d(Current->SDRoot);
+                InorderTreePrint_f(Current->FRoot);
+                printf("\n"); 
+            }
+            break;
 
-        if(*tok == 'r'){
+        case 'r' : 
+
             tok[strlen(tok)] = '\0';            
             if(strcmp(tok,"rmdir\0") == 0){
                 int found = 0;
@@ -634,32 +644,32 @@ int main(void){
                 if (!found){
                     printf("Directory %s doesn't exist!\n",tok);
                 }
-            }else{
-                int found = 0;
-                tok = strtok(NULL,delim);
-                tok[strlen(tok) - 1] = '\0';
-                Current->FRoot = deleteNode_f(Current->FRoot,tok,&found);
-                if (!found){
-                    printf("File %s doesn't exist!\n",tok);
-                }
+                }else{
+                    int found = 0;
+                    tok = strtok(NULL,delim);
+                    tok[strlen(tok) - 1] = '\0';
+                    Current->FRoot = deleteNode_f(Current->FRoot,tok,&found);
+                    if (!found){
+                        printf("File %s doesn't exist!\n",tok);
+                    }
             }
-            continue;
-        }
+            break;
+        
 
-        if(*tok == 'c'){
+        case 'c' : 
             tok = strtok(NULL,delim);
             tok[strlen(tok) - 1] = '\0';
             if(strcmp(tok,"..\0") == 0 && Current->parent != NULL){
                 Previous = Current;
                 Current = Current->parent; 
-                continue;
+                break;
             }else if(strcmp(tok,"-\0") == 0){
                 ADir aux = Current;
                 Current = Previous; 
                 Previous = aux;
-                continue;
+                break;
             }else if(Current->parent == NULL && strcmp(tok,"..\0") == 0){
-                continue;
+                break;
             }
             ADir dest_d = SearchDirAddress(tok,Current->SDRoot);
             
@@ -667,19 +677,19 @@ int main(void){
                 printf("Directory not found!\n");
             }else{
                 Previous = Current;
-                Current = dest_d;
-                //printf("Current -> %s\n", dest_d->name);
+                Current = dest_d;                
             }
-            continue;
-        }
+            break;
+        
 
-        if(*tok == 'p'){
+        case 'p':
+
            PrintPath(Current); 
            printf("\n");
-           continue;
-        }
+           break;
+        
 
-        if(*tok == 'f'){
+        case 'f' : 
 
             tok = strtok(NULL,delim);
 
@@ -697,7 +707,7 @@ int main(void){
                 }else{
                     printf("Directory %s not found!\n",tok);
                 }
-                continue;
+                break;
             }
             if(tok[1] == 'f'){
     
@@ -715,20 +725,27 @@ int main(void){
                     printf("File %s not found!\n",tok);
                 }
             }
-            continue;
+            break;
+
+        
+
+        case 'q' :
+            exit = 1;
+            ResetRoot(root);
+            root = NULL;
+            break;
+        
+        default :
+            printf("Error - could not process command\n");
 
         }
 
-        if(*tok == 'q'){
-            ResetRoot(root);
-            root = NULL;
+        if(exit){
             break;
         }
     }
 
     free(line);
-
-
 
     return 0;
 }
